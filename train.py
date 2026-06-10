@@ -103,7 +103,6 @@ for epoch in range(epochs):
             train_accuracy = float(torch.sum(torch.argmax(preds, dim=-1)==y)/y.numel()*100.0)
             train_ppl = float(math.exp(loss.item()))
             print(f"|{"TRAIN":^10}|{epoch+1:^10}|{f"{i+1}/{len(train_loader)}":^10}|{round(train_loss, 5):^10}|{round(train_accuracy, 5):^10}|{round(train_ppl, 5):^20}|")
-            torch.save(model.state_dict(), f"/content/drive/MyDrive/wikitextmodel-cl{CONTEXT_LENGTH}-{total_steps}steps.pth")
             with torch.inference_mode():
                 test_loss = 0.0
                 test_accuracy = 0.0
