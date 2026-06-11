@@ -92,7 +92,7 @@ for epoch in range(epochs):
             loss = loss_fn(preds.permute(0, 2, 1), y)
 
         optimizer.zero_grad()
-        if torch.cuda.is_bf16_supported():
+        if not torch.cuda.is_bf16_supported():
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()

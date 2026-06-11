@@ -47,12 +47,12 @@ class ScribeLM(nn.Module):
         # PE(pos, 2i) = sin(pos/10000^(2i/dmodel))
         # PE(pos, 2i+1) = cos(pos/10000^(2i/dmodel))
         # Initializes as range [0, d_model), which is tiled context_length times
-        # Then, torch.sin((pos/10_000)**(2*x/self.d_model)) is applied to even indicies (of d_model dimension)
-        # and torch.cos((pos/10_000)**(2*x/self.d_model)) is applied to odd indicies 
+        # Then, torch.sin(pos/10_000**(2*x/self.d_model)) is applied to even indicies (of d_model dimension)
+        # and torch.cos(pos/10_000**(2*x/self.d_model)) is applied to odd indicies 
         self.register_buffer("positional_encodings", torch.tile(torch.arange(self.d_model, dtype=torch.float32), (self.context_length, 1)))
         for pos in range(self.context_length):
-            self.positional_encodings[pos, ::2] = torch.sin((pos/10_000)**(2*self.positional_encodings[pos, ::2]/self.d_model))
-            self.positional_encodings[pos, 1::2] = torch.cos((pos/10_000)**(2*self.positional_encodings[pos, 1::2]/self.d_model))
+            self.positional_encodings[pos, ::2] = torch.sin(pos/10_000**(2*self.positional_encodings[pos, ::2]/self.d_model))
+            self.positional_encodings[pos, 1::2] = torch.cos(pos/10_000**(2*self.positional_encodings[pos, 1::2]/self.d_model))
 
         self.register_buffer("attn_mask", torch.triu(torch.ones((1, 1, self.context_length, self.context_length)), diagonal=1).bool())
         

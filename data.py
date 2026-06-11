@@ -28,6 +28,6 @@ class WikiText103(Dataset):
             tokens += list(self.tokenizer.encode(text).ids)
         self.data = torch.tensor(tokens, dtype=torch.uint16)
     def __len__(self):
-        return len(self.data)//self.context_length
+        return (len(self.data)-1)//self.context_length
     def __getitem__(self, idx):
         return self.data[idx*self.context_length:idx*self.context_length+self.context_length].long(), self.data[idx*self.context_length+1:idx*self.context_length+self.context_length+1].long()
