@@ -41,8 +41,9 @@ class ScribeLM(nn.Module):
         self.ff_2 =  Parameter(xavier_uniform((self.n, self.d_ff, self.d_model), self.d_ff, self.d_model))
         self.b_1 =  Parameter(torch.zeros((self.n, self.d_ff), requires_grad=True))
         self.b_2 =  Parameter(torch.zeros((self.n, self.d_model), requires_grad=True))
-        self.layernorm_1 = list([nn.LayerNorm(self.d_model) for _ in range(self.n)])
-        self.layernorm_2 = list([nn.LayerNorm(self.d_model) for _ in range(self.n)])
+        self.layernorm_1 = nn.ModuleList([nn.LayerNorm(self.d_model) for _ in range(self.n)])
+        self.layernorm_2 = nn.ModuleList([nn.LayerNorm(self.d_model) for _ in range(self.n)])
+
     def forward(self, x: torch.Tensor):
         tokens = x.detach().clone()
 
