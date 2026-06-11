@@ -1,3 +1,5 @@
+"""Contains class ScribeLM, a transformer-based language model with multiheaded attention"""
+
 import torch
 from torch import nn
 from torch.nn.parameter import Parameter
@@ -5,6 +7,20 @@ from utils import xavier_uniform
 import math
 
 class ScribeLM(nn.Module):
+    """Decoder-only transformer (LLM) with multiheaded attention.
+
+    Implemented from scratch without nn.MultiheadAttention or any of pytorch's nn.Transformer layers,
+    to study the transformer architecture.
+    Implements post-normalization, sinusoidal positional encodings, and causal masking
+
+    Args:
+        context_length (int): Maximum size of context window
+        vocab_size (int): Size of model's token vocabulary
+        n (int): Number of attention layers
+        d_model (int): Embedding dimension size
+        d_ff (int): Feedforward layer hidden dimension size
+        h (int): Number of attention heads per layer
+    """
     def __init__(self,
                  context_length: int,
                  vocab_size: int,

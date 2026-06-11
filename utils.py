@@ -1,3 +1,5 @@
+"""Utility functions"""
+
 import torch, math
 
 def xavier_uniform(shape: tuple, in_features: int, out_features: int):

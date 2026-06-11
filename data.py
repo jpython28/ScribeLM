@@ -1,3 +1,5 @@
+"""Contains custom pytorch datasets for training and testing"""
+
 import torch
 from datasets import load_dataset
 from torch.utils.data import Dataset
@@ -5,6 +7,15 @@ from tokenizers import Tokenizer
 from tqdm import tqdm
 
 class WikiText103(Dataset):
+    """Dataset for benchmark WikiText-103.
+
+    A collection of over 100 million words from wikipedia articles, tokenized
+
+    Args:
+        split (str): Dataset split to download, "train" or "test"
+        tokenizer (tokenizers.Tokenizer): Tokenizer to be used
+        context_length (int): Number of tokens in each sample
+    """
     def __init__(self, split: str, tokenizer: Tokenizer, context_length: int):
         super().__init__()
         self.split = split

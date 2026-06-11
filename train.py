@@ -1,3 +1,5 @@
+"""Trains a model according to hyperparameters from a config file, and logs results to a wandb project"""
+
 import torch
 import math
 import wandb
