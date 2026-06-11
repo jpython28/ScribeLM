@@ -6,13 +6,13 @@ import math
 
 class ScribeLM(nn.Module):
     def __init__(self,
-                             context_length: int,
-                             vocab_size: int,
-                             n: int=6,
-                             d_model: int=512,
-                             d_ff: int=2048,
-                             h: int=8,
-                             ):
+                 context_length: int,
+                 vocab_size: int,
+                 n: int=6,
+                 d_model: int=512,
+                 d_ff: int=2048,
+                 h: int=8,
+                 ):
         super().__init__()
 
         self.context_length = context_length
@@ -44,8 +44,8 @@ class ScribeLM(nn.Module):
         self.layernorm_1 = nn.ModuleList([nn.LayerNorm(self.d_model) for _ in range(self.n)])
         self.layernorm_2 = nn.ModuleList([nn.LayerNorm(self.d_model) for _ in range(self.n)])
 
-    def forward(self, x: torch.Tensor):
-        tokens = x.detach().clone()
+    def forward(self, input_tokens: torch.Tensor):
+        tokens = input_tokens.detach().clone()
 
         assert tokens.dim() <= 2
 
@@ -53,28 +53,28 @@ class ScribeLM(nn.Module):
             tokens = tokens.unsqueeze(0)
         tokens = tokens[:, :self.context_length]
         batch_size = tokens.shape[0]
-        context = tokens.shape[-1]
-        assert tokens.shape == (batch_size, context)
+        seq_len = tokens.shape[-1]
+        assert tokens.shape == (batch_size, seq_len)
 
-        embedded = self.embedding(tokens)
-        assert embedded.shape == (batch_size, context, self.d_model)
-        embedded = torch.add(embedded, self.positional_encodings[:context])
+        hidden_state = self.embedding(tokens)
+        assert hidden_state.shape == (batch_size, seq_len, self.d_model)
+        hidden_state = torch.add(hidden_state, self.positional_encodings[:seq_len])
 
-        for layer in range(self.n):
-            tiled_embedded = embedded.unsqueeze(1).repeat(1, self.h, 1, 1)
-            assert tiled_embedded.shape == (batch_size, self.h, context, self.d_model)
-            q = tiled_embedded @ self.w_q[layer, :, :, :].unsqueeze(0)
-            k = tiled_embedded @ self.w_k[layer, :, :, :].unsqueeze(0)
-            v = tiled_embedded @ self.w_v[layer, :, :, :].unsqueeze(0)
-            assert q.shape == (batch_size, self.h, context, self.d_k)
+        for layer_idx in range(self.n):
+            hidden_per_head = hidden_state.unsqueeze(1).repeat(1, self.h, 1, 1)
+            assert hidden_per_head.shape == (batch_size, self.h, seq_len, self.d_model)
+            q = hidden_per_head @ self.w_q[layer_idx, :, :, :].unsqueeze(0)
+            k = hidden_per_head @ self.w_k[layer_idx, :, :, :].unsqueeze(0)
+            v = hidden_per_head @ self.w_v[layer_idx, :, :, :].unsqueeze(0)
+            assert q.shape == (batch_size, self.h, seq_len, self.d_k)
             
-            y = nn.functional.softmax(((q @ k.transpose(-1, -2))/math.sqrt(self.d_k)).masked_fill(self.attn_mask[:context, :context], -torch.inf), dim=-1) @ v
-            assert y.shape == (batch_size, self.h, context, self.d_v)
-            y = torch.reshape(y.transpose(-2, -3), (batch_size, context, -1))
-            assert y.shape == (batch_size, context, self.d_v*self.h)
-            embedded = self.layernorm_1[layer](embedded + y @ self.w_o[layer, :, :].unsqueeze(0))
-            assert embedded.shape == (batch_size, context, self.d_model)
-            y = torch.maximum(torch.tensor(0), embedded @ self.ff_1[layer, :].unsqueeze(0) + self.b_1[layer, :])
-            embedded = self.layernorm_2[layer](embedded + y @ self.ff_2[layer, :].unsqueeze(0) + self.b_2[layer, :])
-            assert embedded.shape == (batch_size, context, self.d_model)
-        return embedded @ self.embedding.weight.T.unsqueeze(0)
+            attn_out = nn.functional.softmax(((q @ k.transpose(-1, -2))/math.sqrt(self.d_k)).masked_fill(self.attn_mask[:seq_len, :seq_len], -torch.inf), dim=-1) @ v
+            assert attn_out.shape == (batch_size, self.h, seq_len, self.d_v)
+            attn_out = torch.reshape(attn_out.transpose(-2, -3), (batch_size, seq_len, -1))
+            assert attn_out.shape == (batch_size, seq_len, self.d_v*self.h)
+            hidden_state = self.layernorm_1[layer_idx](hidden_state + attn_out @ self.w_o[layer_idx, :, :].unsqueeze(0))
+            assert hidden_state.shape == (batch_size, seq_len, self.d_model)
+            attn_out = torch.maximum(torch.tensor(0), hidden_state @ self.ff_1[layer_idx, :].unsqueeze(0) + self.b_1[layer_idx, :])
+            hidden_state = self.layernorm_2[layer_idx](hidden_state + attn_out @ self.ff_2[layer_idx, :].unsqueeze(0) + self.b_2[layer_idx, :])
+            assert hidden_state.shape == (batch_size, seq_len, self.d_model)
+        return hidden_state @ self.embedding.weight.T.unsqueeze(0)
