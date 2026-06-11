@@ -73,10 +73,10 @@ if not torch.cuda.is_bf16_supported():
 autocast_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
 
 run = wandb.init(
-entity="jschaller2028-personal",
-project="ScribeLM",
-name=run_name,
-config=config,
+    entity="jschaller2028-personal",
+    project="ScribeLM",
+    name=run_name,
+    config=config,
 )
 
 print(f"|{"Mode":^10}|{"Epoch":^10}|{"Batch":^10}|{"Loss":^10}|{"Accuracy":^10}|{"PPL":^20}|")
