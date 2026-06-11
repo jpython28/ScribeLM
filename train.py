@@ -5,6 +5,7 @@ import math
 import wandb
 import yaml
 import argparse
+import os
 from torch import nn
 from model import ScribeLM
 from data import WikiText103
@@ -17,6 +18,17 @@ args = parser.parse_args()
 
 with open(args.config, "r") as f:
     config = yaml.safe_load(f)
+
+if os.path.exists("configs/wandb.yaml"):
+    with open("configs./wandb.yaml", "r") as f:
+        wandb_config = yaml.safe_load(f)
+    use_wandb = wandb_config["wandb"]["enabled"]
+    wandb_entity = wandb_config["wandb"]["entity"]
+    wandb_project = wandb_config["wandb"]["project"]
+else:
+    use_wandb = False
+    wandb_entity = None
+    wandb_project = None
 
 run_name = config["train"]["run_name"]
 epochs = config["train"]["epochs"]
@@ -73,10 +85,11 @@ if not torch.cuda.is_bf16_supported():
 autocast_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
 
 run = wandb.init(
-    entity="jschaller2028-personal",
-    project="ScribeLM",
+    entity=wandb_entity,
+    project=wandb_project,
     name=run_name,
     config=config,
+    mode = "online" if use_wandb else "disabled",
 )
 
 print(f"|{"Mode":^10}|{"Epoch":^10}|{"Batch":^10}|{"Loss":^10}|{"Accuracy":^10}|{"PPL":^20}|")
@@ -125,13 +138,13 @@ for epoch in range(epochs):
             test_ppl /= len(test_loader)
             print(f"|{"TEST":^10}|{epoch+1:^10}|{"":^10}|{round(test_loss, 5):^10}|{round(test_accuracy, 5):^10}|{round(test_ppl, 5):^20}|")
             run.log(
-            {
-                "train_loss": train_loss,
-                "train_accuracy": train_accuracy,
-                "train_perplexity": train_ppl,
-                "test_loss": test_loss,
-                "test_accuracy": test_accuracy,
-                "test_perplexity": test_ppl,
-            }
+                {
+                    "train_loss": train_loss,
+                    "train_accuracy": train_accuracy,
+                    "train_perplexity": train_ppl,
+                    "test_loss": test_loss,
+                    "test_accuracy": test_accuracy,
+                    "test_perplexity": test_ppl,
+                }
             )
 run.finish()

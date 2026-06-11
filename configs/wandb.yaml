@@ -1,0 +1,4 @@
+wandb:
+  enabled: true
+  project: ScribeLM
+  entity: jschaller2028-personal
