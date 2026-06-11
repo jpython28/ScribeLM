@@ -24,13 +24,15 @@ class ScribeLM(nn.Module):
         assert self.d_model%h==0
         self.d_k = self.d_v = d_model//h
 
-        self.embedding =  nn.Embedding(self.vocab_size, self.d_model, sparse=True)
+        self.embedding = nn.Embedding(self.vocab_size, self.d_model, sparse=True)
 
-        self.positional_encodings = torch.tile(torch.arange(self.d_model, dtype=torch.float32, device=next(self.parameters()).device), (self.context_length, 1))
+        self.register_buffer("positional_encodings", torch.tile(torch.arange(self.d_model, dtype=torch.float32), (self.context_length, 1)))
         for pos in range(self.context_length):
             self.positional_encodings[pos, ::2] = torch.sin((pos/10_000)**(2*self.positional_encodings[pos, ::2]/self.d_model))
             self.positional_encodings[pos, 1::2] = torch.cos((pos/10_000)**(2*self.positional_encodings[pos, 1::2]/self.d_model))
 
+        self.register_buffer("attn_mask", torch.triu(torch.ones((1, 1, self.context_length, self.context_length)), diagonal=1).bool())
+        
         self.w_q = Parameter(xavier_uniform((self.n, self.h, self.d_model, self.d_k), self.d_model, self.d_k))
         self.w_k =  Parameter(xavier_uniform((self.n, self.h, self.d_model, self.d_k), self.d_model, self.d_k))
         self.w_v =  Parameter(xavier_uniform((self.n, self.h, self.d_model, self.d_v), self.d_model, self.d_v))
@@ -64,8 +66,8 @@ class ScribeLM(nn.Module):
             k = tiled_embedded @ self.w_k[layer, :, :, :].unsqueeze(0)
             v = tiled_embedded @ self.w_v[layer, :, :, :].unsqueeze(0)
             assert q.shape == (batch_size, self.h, context, self.d_k)
-            mask = torch.triu(torch.ones((1, 1, context, context)), diagonal=1).bool().to(next(self.parameters()).device)
-            y = nn.functional.softmax(((q @ k.transpose(-1, -2))/math.sqrt(self.d_k)).masked_fill(mask, -torch.inf), dim=-1) @ v
+            
+            y = nn.functional.softmax(((q @ k.transpose(-1, -2))/math.sqrt(self.d_k)).masked_fill(self.attn_mask[:context, :context], -torch.inf), dim=-1) @ v
             assert y.shape == (batch_size, self.h, context, self.d_v)
             y = torch.reshape(y.transpose(-2, -3), (batch_size, context, -1))
             assert y.shape == (batch_size, context, self.d_v*self.h)
