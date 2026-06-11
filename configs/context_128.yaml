@@ -1,12 +1,12 @@
 model:
-  context_length: 64
+  context_length: 128
   vocab_size: 50257
   num_layers: 6
   d_model: 512
   d_feedforward: 2048
   num_heads: 8
 train:
-  run_name: context_64
+  run_name: context_128
   epochs: 1
   batch_size: 32
   lr: 0.0001
