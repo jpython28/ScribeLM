@@ -2,6 +2,7 @@ import torch
 from datasets import load_dataset
 from torch.utils.data import Dataset
 from tokenizers import Tokenizer
+from tqdm import tqdm
 
 class WikiText103(Dataset):
     def __init__(self, split: str, tokenizer: Tokenizer, context_length: int):
@@ -11,7 +12,8 @@ class WikiText103(Dataset):
         self.context_length = context_length
         dataset = load_dataset("iohadrubin/wikitext-103-raw-v1")
         tokens = []
-        for text in dataset[split]["text"]:
+        print("Tokenizing dataset...")
+        for text in tqdm(dataset[split]["text"]):
             tokens += list(self.tokenizer.encode(text).ids)
         self.data = torch.tensor(tokens, dtype=torch.uint16)
     def __len__(self):
