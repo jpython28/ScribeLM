@@ -49,10 +49,16 @@ train_data = WikiText103(
                     context_length=context_length,
                     )
 validation_data = WikiText103(
-                    split="valid",
+                    split="validation",
                     tokenizer=tokenizer,
                     context_length=context_length,
                     )
+test_data = WikiText103(
+                    split="test",
+                    tokenizer=tokenizer,
+                    context_length=context_length,
+                    )
+
 
 train_loader = DataLoader(dataset=train_data,
                         batch_size=batch_size,
@@ -62,6 +68,11 @@ validation_loader = DataLoader(dataset=validation_data,
                         batch_size=batch_size,
                         shuffle=False,
                         )
+test_loader = DataLoader(dataset=test_data,
+                        batch_size=batch_size,
+                        shuffle=False,
+                        )
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 model = ScribeLM(context_length=context_length,
