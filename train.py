@@ -12,6 +12,22 @@ from data import WikiText103
 from tokenizers import Tokenizer
 from torch.utils.data import DataLoader
 
+def evaluate(model: nn.Module, dataloader: DataLoader, loss_fn: nn.Module, device: str, autocast_dtype=torch.float16, use_amp=False) -> float:
+    was_training = model.training
+    model.eval()
+    with torch.inference_mode():
+        total_loss = 0.0
+        for data in dataloader:
+            x, y = data
+            x, y = x.to(device), y.to(device)
+            with torch.amp.autocast(device_type=device, dtype=autocast_dtype, enabled=use_amp):
+                preds = model(x)
+                loss = loss_fn(preds.permute(0, 2, 1), y)
+            total_loss += loss.item()
+    if was_training:
+        model.train()
+    return total_loss/len(dataloader)
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--config", required=True)
 args = parser.parse_args()
@@ -90,10 +106,13 @@ optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
 scaler = torch.amp.GradScaler(device=device)
 
-if not torch.cuda.is_bf16_supported():
+use_bf16 = torch.cuda.is_available() and torch.cuda.is_bf16_supported()
+
+if not use_bf16:
     print("Warning: bfloat16 not supported")
 
-autocast_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+use_amp = device == "cuda"
+autocast_dtype = torch.bfloat16 if use_bf16 else torch.float16
 
 run = wandb.init(
     entity=wandb_entity,
@@ -103,20 +122,22 @@ run = wandb.init(
     mode = "online" if use_wandb else "disabled",
 )
 
-print(f"|{"Mode":^10}|{"Epoch":^10}|{"Batch":^10}|{"Loss":^10}|{"Accuracy":^10}|{"PPL":^20}|")
+print(f"|{"Mode":^10}|{"Epoch":^10}|{"Batch":^10}|{"Loss":^10}|{"PPL":^20}|")
 
 total_steps = 0
+best_val_loss = float("inf")
 
+model.train()
 for epoch in range(epochs):
-    for i, data in enumerate(train_loader):
+    for batch_idx, data in enumerate(train_loader):
         x, y = data
         x, y = x.to(device), y.to(device)
-        with torch.amp.autocast(device, dtype=autocast_dtype):
+        with torch.amp.autocast(device_type=device, dtype=autocast_dtype, enabled=use_amp):
             preds = model(x)
             loss = loss_fn(preds.permute(0, 2, 1), y)
 
         optimizer.zero_grad()
-        if not torch.cuda.is_bf16_supported():
+        if use_amp and not use_bf16:
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
@@ -124,61 +145,56 @@ for epoch in range(epochs):
             loss.backward()
             optimizer.step()
         total_steps += 1
-        if (i+1)%500==0:
+        if (batch_idx+1)%500==0:
             train_loss = loss.item()
-            train_accuracy = float(torch.sum(torch.argmax(preds, dim=-1)==y)/y.numel()*100.0)
             train_ppl = float(math.exp(loss.item()))
-            print(f"|{"TRAIN":^10}|{epoch+1:^10}|{f"{i+1}/{len(train_loader)}":^10}|{round(train_loss, 5):^10}|{round(train_accuracy, 5):^10}|{round(train_ppl, 5):^20}|")
-            with torch.inference_mode():
-                validation_loss = 0.0
-                validation_accuracy = 0.0
-                validation_ppl = 0.0
-                for i, data in enumerate(validation_loader):
-                    x, y = data
-                    x, y = x.to(device), y.to(device)
-                    with torch.amp.autocast(device, dtype=autocast_dtype):
-                        preds = model(x)
-                        loss = loss_fn(preds.permute(0, 2, 1), y)
-                    validation_loss += loss.item()
-                    accuracy = float(torch.sum(torch.argmax(preds, dim=-1)==y)/y.numel()*100.0)
-                    validation_accuracy += accuracy
-                    ppl = float(math.exp(loss.item()))
-                    validation_ppl += ppl
-            validation_loss /= len(validation_loader)
-            validation_accuracy /= len(validation_loader)
-            validation_ppl /= len(validation_loader)
-            print(f"|{"VALID":^10}|{epoch+1:^10}|{"":^10}|{round(validation_loss, 5):^10}|{round(validation_accuracy, 5):^10}|{round(validation_ppl, 5):^20}|")
+            print(f"|{"TRAIN":^10}|{epoch+1:^10}|{f"{batch_idx+1}/{len(train_loader)}":^10}|{round(train_loss, 5):^10}|{round(train_ppl, 5):^20}|")
+            validation_loss = evaluate(model=model,
+                                       dataloader=validation_loader,
+                                       loss_fn=loss_fn,
+                                       device=device,
+                                       autocast_dtype=autocast_dtype,
+                                       use_amp=use_amp,
+                                       )
+            if validation_loss < best_val_loss:
+                best_val_loss = validation_loss
+                torch.save(model.state_dict(), "best_model.pt")
+            validation_ppl = math.exp(validation_loss)
+            print(f"|{"VALID":^10}|{epoch+1:^10}|{"":^10}|{round(validation_loss, 5):^10}|{round(validation_ppl, 5):^20}|")
             run.log(
                 {
-                    "train_loss": train_loss,
-                    "train_accuracy": train_accuracy,
-                    "train_perplexity": train_ppl,
-                    "validation_loss": validation_loss,
-                    "validation_accuracy": validation_accuracy,
-                    "validation_perplexity": validation_ppl,
-                }
+                    "train/loss": train_loss,
+                    "train/perplexity": train_ppl,
+                    "validation/loss": validation_loss,
+                    "validation/perplexity": validation_ppl,
+                },
+                step = total_steps
             )
 
-with torch.inference_mode():
-    test_loss = 0.0
-    test_accuracy = 0.0
-    test_ppl = 0.0
-    for i, data in enumerate(test_loader):
-        x, y = data
-        x, y = x.to(device), y.to(device)
-        with torch.amp.autocast(device, dtype=autocast_dtype):
-            preds = model(x)
-            loss = loss_fn(preds.permute(0, 2, 1), y)
-        test_loss += loss.item()
-        accuracy = float(torch.sum(torch.argmax(preds, dim=-1)==y)/y.numel()*100.0)
-        test_accuracy += accuracy
-        ppl = float(math.exp(loss.item()))
-        test_ppl += ppl
-test_loss /= len(test_loader)
-test_accuracy /= len(test_loader)
-test_ppl /= len(test_loader)
+model.load_state_dict(torch.load("best_model.pt", map_location=device))
 
-run.summary["test_loss"] = test_loss
-run.summary["test_accuracy"] = test_accuracy
-run.summary["test_perplexity"] = test_ppl
+test_loss = evaluate(model=model,
+                     dataloader=test_loader,
+                     loss_fn=loss_fn,
+                     device=device,
+                     autocast_dtype=autocast_dtype,
+                     use_amp=use_amp,
+                     )
+test_ppl = math.exp(test_loss)
+
+run.summary["test/loss"] = test_loss
+run.summary["test/perplexity"] = test_ppl
+
+artifact = wandb.Artifact(
+    name=f"{run_name}-model",
+    type="model",
+    metadata={
+        "best_validation_loss": best_val_loss,
+        "test_loss": test_loss,
+        "test_perplexity": test_ppl,
+    },
+)
+artifact.add_file("best_model.pt")
+run.log_artifact(artifact)
+
 run.finish()
