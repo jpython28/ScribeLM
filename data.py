@@ -12,7 +12,7 @@ class WikiText103(Dataset):
     A collection of over 100 million words from wikipedia articles, tokenized
 
     Args:
-        split (str): Dataset split to download, "train" or "test"
+        split (str): Dataset split to download, "train", "valid", or "test"
         tokenizer (tokenizers.Tokenizer): Tokenizer to be used
         context_length (int): Number of tokens in each sample
     """

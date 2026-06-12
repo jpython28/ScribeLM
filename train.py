@@ -48,8 +48,8 @@ train_data = WikiText103(
                     tokenizer=tokenizer,
                     context_length=context_length,
                     )
-test_data = WikiText103(
-                    split="test",
+validation_data = WikiText103(
+                    split="valid",
                     tokenizer=tokenizer,
                     context_length=context_length,
                     )
@@ -58,7 +58,7 @@ train_loader = DataLoader(dataset=train_data,
                         batch_size=batch_size,
                         shuffle=True,
                         )
-test_loader = DataLoader(dataset=test_data,
+validation_loader = DataLoader(dataset=validation_data,
                         batch_size=batch_size,
                         shuffle=False,
                         )
@@ -119,32 +119,32 @@ for epoch in range(epochs):
             train_ppl = float(math.exp(loss.item()))
             print(f"|{"TRAIN":^10}|{epoch+1:^10}|{f"{i+1}/{len(train_loader)}":^10}|{round(train_loss, 5):^10}|{round(train_accuracy, 5):^10}|{round(train_ppl, 5):^20}|")
             with torch.inference_mode():
-                test_loss = 0.0
-                test_accuracy = 0.0
-                test_ppl = 0.0
-                for i, data in enumerate(test_loader):
+                validation_loss = 0.0
+                validation_accuracy = 0.0
+                validation_ppl = 0.0
+                for i, data in enumerate(validation_loader):
                     x, y = data
                     x, y = x.to(device), y.to(device)
                     with torch.amp.autocast(device, dtype=autocast_dtype):
                         preds = model(x)
                         loss = loss_fn(preds.permute(0, 2, 1), y)
-                    test_loss += loss.item()
+                    validation_loss += loss.item()
                     accuracy = float(torch.sum(torch.argmax(preds, dim=-1)==y)/y.numel()*100.0)
-                    test_accuracy += accuracy
+                    validation_accuracy += accuracy
                     ppl = float(math.exp(loss.item()))
-                    test_ppl += ppl
-            test_loss /= len(test_loader)
-            test_accuracy /= len(test_loader)
-            test_ppl /= len(test_loader)
-            print(f"|{"TEST":^10}|{epoch+1:^10}|{"":^10}|{round(test_loss, 5):^10}|{round(test_accuracy, 5):^10}|{round(test_ppl, 5):^20}|")
+                    validation_ppl += ppl
+            validation_loss /= len(validation_loader)
+            validation_accuracy /= len(validation_loader)
+            validation_ppl /= len(validation_loader)
+            print(f"|{"VALID":^10}|{epoch+1:^10}|{"":^10}|{round(validation_loss, 5):^10}|{round(validation_accuracy, 5):^10}|{round(validation_ppl, 5):^20}|")
             run.log(
                 {
                     "train_loss": train_loss,
                     "train_accuracy": train_accuracy,
                     "train_perplexity": train_ppl,
-                    "test_loss": test_loss,
-                    "test_accuracy": test_accuracy,
-                    "test_perplexity": test_ppl,
+                    "validation_loss": validation_loss,
+                    "validation_accuracy": validation_accuracy,
+                    "validation_perplexity": validation_ppl,
                 }
             )
 run.finish()
