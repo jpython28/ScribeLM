@@ -38,7 +38,7 @@ class ScribeLM(nn.Module):
         self.h = h
         self.d_k = self.d_v = d_model//h
 
-        assert self.d_model%h==0, "d_model must be divisible by h (humber of heads)"
+        assert self.d_model%h==0, "d_model must be divisible by h (number of heads)"
 
         self.embedding = nn.Embedding(self.vocab_size, self.d_model)
         
@@ -51,7 +51,7 @@ class ScribeLM(nn.Module):
         self.register_buffer("positional_encodings", torch.tile(torch.arange(self.d_model, dtype=torch.float32), (self.context_length, 1)))
         for pos in range(self.context_length):
             self.positional_encodings[pos, ::2] = torch.sin(pos/10_000**(self.positional_encodings[pos, ::2]/self.d_model))
-            self.positional_encodings[pos, 1::2] = torch.cos(pos/10_000**(self.positional_encodings[pos, 1::2]/self.d_model))
+            self.positional_encodings[pos, 1::2] = torch.cos(pos/10_000**(self.positional_encodings[pos, ::2]/self.d_model))
 
         self.register_buffer("attn_mask", torch.triu(torch.ones((1, 1, self.context_length, self.context_length)), diagonal=1).bool())
         

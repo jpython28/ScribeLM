@@ -135,6 +135,7 @@ print(f"|{"Mode":^10}|{"Epoch":^10}|{"Batch":^10}|{"Loss":^10}|{"PPL":^20}|")
 
 total_steps = 0
 best_val_loss = float("inf")
+steps_accumulated = 0
 
 model.train()
 for epoch in range(epochs):
@@ -156,8 +157,10 @@ for epoch in range(epochs):
             optimizer.step()
         total_loss += loss.item()
         total_steps += 1
-        if batch_idx%validate_freq==0:
-            train_loss = total_loss/validate_freq
+        steps_accumulated += 1
+        if (batch_idx+1)%validate_freq==0:
+            train_loss = total_loss/steps_accumulated
+            steps_accumulated = 0
             train_ppl = math.exp(train_loss)
             print(f"|{"TRAIN":^10}|{epoch+1:^10}|{f"{batch_idx+1}/{len(train_loader)}":^10}|{round(train_loss, 5):^10}|{round(train_ppl, 5):^20}|")
             validation_loss = evaluate(model=model,
@@ -169,7 +172,7 @@ for epoch in range(epochs):
                                        )
             if validation_loss < best_val_loss:
                 best_val_loss = validation_loss
-                torch.save(model.state_dict(), "best_model.pt")
+                torch.save(model.state_dict(), f"{run_name}_best_model.pt")
             validation_ppl = math.exp(validation_loss)
             print(f"|{"VALID":^10}|{epoch+1:^10}|{"":^10}|{round(validation_loss, 5):^10}|{round(validation_ppl, 5):^20}|")
             run.log(
@@ -183,7 +186,7 @@ for epoch in range(epochs):
             )
             total_loss = 0.0
 
-model.load_state_dict(torch.load("best_model.pt", map_location=device))
+model.load_state_dict(torch.load(f"{run_name}_best_model.pt", map_location=device))
 
 test_loss = evaluate(model=model,
                      dataloader=test_loader,
@@ -206,6 +209,7 @@ artifact = wandb.Artifact(
         "test_perplexity": test_ppl,
     },
 )
+
 artifact.add_file("best_model.pt")
 run.log_artifact(artifact)
 
