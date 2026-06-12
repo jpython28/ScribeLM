@@ -3,7 +3,6 @@
 import torch
 from torch import nn
 from torch.nn.parameter import Parameter
-from utils import xavier_uniform
 import math
 
 class ScribeLM(nn.Module):
@@ -56,12 +55,12 @@ class ScribeLM(nn.Module):
 
         self.register_buffer("attn_mask", torch.triu(torch.ones((1, 1, self.context_length, self.context_length)), diagonal=1).bool())
         
-        self.w_q = Parameter(xavier_uniform((self.n, self.h, self.d_model, self.d_k), self.d_model, self.d_k))
-        self.w_k =  Parameter(xavier_uniform((self.n, self.h, self.d_model, self.d_k), self.d_model, self.d_k))
-        self.w_v =  Parameter(xavier_uniform((self.n, self.h, self.d_model, self.d_v), self.d_model, self.d_v))
-        self.w_o =  Parameter(xavier_uniform((self.n, self.h*self.d_v, self.d_model), self.h*self.d_v, self.d_model))
-        self.ff_1 =  Parameter(xavier_uniform((self.n, self.d_model, self.d_ff), self.d_model, self.d_ff))
-        self.ff_2 =  Parameter(xavier_uniform((self.n, self.d_ff, self.d_model), self.d_ff, self.d_model))
+        self.w_q = Parameter(nn.init.xavier_uniform_(torch.empty(self.n, self.h, self.d_model, self.d_k)))
+        self.w_k =  Parameter(nn.init.xavier_uniform_(torch.empty(self.n, self.h, self.d_model, self.d_k)))
+        self.w_v =  Parameter(nn.init.xavier_uniform_(torch.empty(self.n, self.h, self.d_model, self.d_v)))
+        self.w_o =  Parameter(nn.init.xavier_uniform_(torch.empty(self.n, self.h*self.d_v, self.d_model)))
+        self.ff_1 =  Parameter(nn.init.xavier_uniform_(torch.empty(self.n, self.d_model, self.d_ff)))
+        self.ff_2 =  Parameter(nn.init.xavier_uniform_(torch.empty(self.n, self.d_ff, self.d_model)))
         self.b_1 =  Parameter(torch.zeros((self.n, self.d_ff), requires_grad=True))
         self.b_2 =  Parameter(torch.zeros((self.n, self.d_model), requires_grad=True))
         self.layernorm_1 = nn.ModuleList([nn.LayerNorm(self.d_model) for _ in range(self.n)])

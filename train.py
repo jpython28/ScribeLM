@@ -50,12 +50,18 @@ run_name = config["train"]["run_name"]
 epochs = config["train"]["epochs"]
 batch_size = config["train"]["batch_size"]
 lr = config["train"]["lr"]
+seed = config["train"]["seed"]
 context_length = config["model"]["context_length"]
 vocab_size = config["model"]["vocab_size"]
 num_layers = config["model"]["num_layers"]
 d_model = config["model"]["d_model"]
 d_feedforward = config["model"]["d_feedforward"]
 num_heads = config["model"]["num_heads"]
+
+torch.manual_seed(seed)
+
+if torch.cuda.is_available():
+    torch.cuda.manual_seed_all(seed)
 
 tokenizer = Tokenizer.from_pretrained("gpt2")
 
