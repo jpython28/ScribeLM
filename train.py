@@ -43,6 +43,7 @@ if os.path.exists(wandb_config_path):
     wandb_entity = wandb_config["wandb"]["entity"]
     wandb_project = wandb_config["wandb"]["project"]
 else:
+    print("wandb config not found, not logging to wanb.")
     use_wandb = False
     wandb_entity = None
     wandb_project = None
