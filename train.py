@@ -53,6 +53,7 @@ epochs = config["train"]["epochs"]
 batch_size = config["train"]["batch_size"]
 lr = config["train"]["lr"]
 seed = config["train"]["seed"]
+validate_freq = config["train"]["validate_freq"]
 context_length = config["model"]["context_length"]
 vocab_size = config["model"]["vocab_size"]
 num_layers = config["model"]["num_layers"]
@@ -137,6 +138,7 @@ best_val_loss = float("inf")
 
 model.train()
 for epoch in range(epochs):
+    total_loss = 0.0
     for batch_idx, data in enumerate(train_loader):
         x, y = data
         x, y = x.to(device), y.to(device)
@@ -152,10 +154,11 @@ for epoch in range(epochs):
         else:
             loss.backward()
             optimizer.step()
+        total_loss += loss.item()
         total_steps += 1
-        if (batch_idx+1)%500==0:
-            train_loss = loss.item()
-            train_ppl = float(math.exp(loss.item()))
+        if batch_idx%validate_freq==0:
+            train_loss = total_loss/validate_freq
+            train_ppl = math.exp(train_loss)
             print(f"|{"TRAIN":^10}|{epoch+1:^10}|{f"{batch_idx+1}/{len(train_loader)}":^10}|{round(train_loss, 5):^10}|{round(train_ppl, 5):^20}|")
             validation_loss = evaluate(model=model,
                                        dataloader=validation_loader,
@@ -172,12 +175,13 @@ for epoch in range(epochs):
             run.log(
                 {
                     "train/loss": train_loss,
-                    "train/perplexity": train_ppl,
+                    "train/perplexity": min(train_ppl, 100_000), # Avoids high values affecting graph y-scale
                     "validation/loss": validation_loss,
-                    "validation/perplexity": validation_ppl,
+                    "validation/perplexity": min(validation_ppl, 100_000),
                 },
                 step = total_steps
             )
+            total_loss = 0.0
 
 model.load_state_dict(torch.load("best_model.pt", map_location=device))
 
