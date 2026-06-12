@@ -35,8 +35,9 @@ args = parser.parse_args()
 with open(args.config, "r") as f:
     config = yaml.safe_load(f)
 
-if os.path.exists("configs/wandb.yaml"):
-    with open("configs/wandb.yaml", "r") as f:
+wandb_config_path = os.path.abspath(os.path.dirname(__file__))+"\\configs\\wandb.yaml"
+if os.path.exists(wandb_config_path):
+    with open(wandb_config_path, "r") as f:
         wandb_config = yaml.safe_load(f)
     use_wandb = wandb_config["wandb"]["enabled"]
     wandb_entity = wandb_config["wandb"]["entity"]
