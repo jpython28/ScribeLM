@@ -158,4 +158,27 @@ for epoch in range(epochs):
                     "validation_perplexity": validation_ppl,
                 }
             )
+
+with torch.inference_mode():
+    test_loss = 0.0
+    test_accuracy = 0.0
+    test_ppl = 0.0
+    for i, data in enumerate(test_loader):
+        x, y = data
+        x, y = x.to(device), y.to(device)
+        with torch.amp.autocast(device, dtype=autocast_dtype):
+            preds = model(x)
+            loss = loss_fn(preds.permute(0, 2, 1), y)
+        test_loss += loss.item()
+        accuracy = float(torch.sum(torch.argmax(preds, dim=-1)==y)/y.numel()*100.0)
+        test_accuracy += accuracy
+        ppl = float(math.exp(loss.item()))
+        test_ppl += ppl
+test_loss /= len(test_loader)
+test_accuracy /= len(test_loader)
+test_ppl /= len(test_loader)
+
+run.summary["test_loss"] = test_loss
+run.summary["test_accuracy"] = test_accuracy
+run.summary["test_perplexity"] = test_ppl
 run.finish()
