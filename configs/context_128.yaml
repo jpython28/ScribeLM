@@ -8,7 +8,7 @@ model:
 train:
   run_name: context_128
   epochs: 1
-  batch_size: 128
+  batch_size: 64
   lr: 0.0001
   seed: 1738
   validate_freq: 500
