@@ -150,10 +150,17 @@ for epoch in range(epochs):
         optimizer.zero_grad()
         if use_amp and not use_bf16:
             scaler.scale(loss).backward()
+            scaler.unscale_(optimizer)
+            torch.nn.utils.clip_grad_norm_(parameters=model.parameters(),
+                                           max_norm=1.0,
+                                           )
             scaler.step(optimizer)
             scaler.update()
         else:
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(parameters=model.parameters(),
+                                           max_norm=1.0,
+                                           )
             optimizer.step()
         total_loss += loss.item()
         total_steps += 1
