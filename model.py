@@ -39,8 +39,6 @@ class ScribeLM(nn.Module):
         self.d_k = self.d_v = d_model//h
 
         assert self.d_model%h==0, "d_model must be divisible by h (number of heads)"
-
-        self.embedding = nn.Embedding(self.vocab_size, self.d_model)
         
         # Uses same sinusoidal (not learned) positional encodings as the paper Attention is All You Need:
         # PE(pos, 2i) = sin(pos/10000^(2i/dmodel))
@@ -54,6 +52,9 @@ class ScribeLM(nn.Module):
             self.positional_encodings[pos, 1::2] = torch.cos(pos/10_000**(self.positional_encodings[pos, ::2]/self.d_model))
 
         self.register_buffer("attn_mask", torch.triu(torch.ones((1, 1, self.context_length, self.context_length)), diagonal=1).bool())
+
+        self.embedding = nn.Embedding(self.vocab_size, self.d_model)
+        nn.init.xavier_uniform_(self.embedding.weight)
         
         self.w_q = Parameter(nn.init.xavier_uniform_(torch.empty(self.n, self.h, self.d_model, self.d_k)))
         self.w_k =  Parameter(nn.init.xavier_uniform_(torch.empty(self.n, self.h, self.d_model, self.d_k)))
