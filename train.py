@@ -200,6 +200,8 @@ test_ppl = math.exp(test_loss)
 run.summary["test/loss"] = test_loss
 run.summary["test/perplexity"] = test_ppl
 
+print(f"|{"TEST":^10}|{"":^10}|{"":^10}|{round(test_loss, 5):^10}|{round(test_ppl, 5):^20}|")
+
 artifact = wandb.Artifact(
     name=f"{run_name}-model",
     type="model",
@@ -210,7 +212,7 @@ artifact = wandb.Artifact(
     },
 )
 
-artifact.add_file("best_model.pt")
+artifact.add_file(f"{run_name}_best_model.pt")
 run.log_artifact(artifact)
 
 run.finish()
