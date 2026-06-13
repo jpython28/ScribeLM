@@ -9,6 +9,6 @@ train:
   run_name: context_128
   epochs: 1
   batch_size: 48
-  lr: 0.000075
+  lr: 0.0004
   seed: 1738
   validate_freq: 100
