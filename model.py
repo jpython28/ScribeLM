@@ -54,7 +54,7 @@ class ScribeLM(nn.Module):
         self.register_buffer("attn_mask", torch.triu(torch.ones((1, 1, self.context_length, self.context_length)), diagonal=1).bool())
 
         self.embedding = nn.Embedding(self.vocab_size, self.d_model)
-        nn.init.xavier_uniform_(self.embedding.weight)
+        #nn.init.xavier_uniform_(self.embedding.weight)
         
         self.w_q = Parameter(nn.init.xavier_uniform_(torch.empty(self.n, self.h, self.d_model, self.d_k)))
         self.w_k =  Parameter(nn.init.xavier_uniform_(torch.empty(self.n, self.h, self.d_model, self.d_k)))
