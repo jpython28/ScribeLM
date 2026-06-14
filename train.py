@@ -131,7 +131,7 @@ run = wandb.init(
     mode = "online" if use_wandb else "disabled",
 )
 
-print(f"|{"Mode":^10}|{"Step":^10}|{"Epoch":^10}|{"Batch":^10}|{"Loss":^10}|{"PPL":^20}|")
+print(f"|{"Mode":^10}|{"Step":^20}|{"Epoch":^10}|{"Batch":^10}|{"Loss":^10}|{"PPL":^20}|")
 
 total_steps = 0
 total_epochs = 0
@@ -171,7 +171,7 @@ while total_steps < num_steps:
             train_loss = total_loss/steps_accumulated
             steps_accumulated = 0
             train_ppl = math.exp(train_loss)
-            print(f"|{"TRAIN":^10}|{total_steps:^10}|{total_epochs:^10}|{f"{batch_idx+1}/{len(train_loader)}":^10}|{round(train_loss, 5):^10}|{round(train_ppl, 5):^20}|")
+            print(f"|{"TRAIN":^10}|{f"{total_steps}/{num_steps}":^20}|{total_epochs:^10}|{f"{batch_idx+1}/{len(train_loader)}":^10}|{round(train_loss, 5):^10}|{round(train_ppl, 5):^20}|")
             validation_loss = evaluate(model=model,
                                        dataloader=validation_loader,
                                        loss_fn=loss_fn,
@@ -183,7 +183,7 @@ while total_steps < num_steps:
                 best_val_loss = validation_loss
                 torch.save(model.state_dict(), f"{run_name}_best_model.pt")
             validation_ppl = math.exp(validation_loss)
-            print(f"|{"VALID":^10}|{"":^10}|{"":^10}|{"":^10}|{round(validation_loss, 5):^10}|{round(validation_ppl, 5):^20}|")
+            print(f"|{"VALID":^10}|{"":^20}|{"":^10}|{"":^10}|{round(validation_loss, 5):^10}|{round(validation_ppl, 5):^20}|")
             run.log(
                 {
                     "train/loss": train_loss,
@@ -211,7 +211,7 @@ test_ppl = math.exp(test_loss)
 run.summary["test/loss"] = test_loss
 run.summary["test/perplexity"] = test_ppl
 
-print(f"|{"TEST":^10}|{"":^10}|{"":^10}|{"":^10}|{round(test_loss, 5):^10}|{round(test_ppl, 5):^20}|")
+print(f"|{"TEST":^10}|{"":^20}|{"":^10}|{"":^10}|{round(test_loss, 5):^10}|{round(test_ppl, 5):^20}|")
 
 artifact = wandb.Artifact(
     name=f"{run_name}-model",
