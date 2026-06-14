@@ -171,7 +171,7 @@ while total_steps < num_steps:
             train_loss = total_loss/steps_accumulated
             steps_accumulated = 0
             train_ppl = math.exp(train_loss)
-            print(f"|{"TRAIN":^10}|{total_steps:^10}|{total_epochs+1:^10}|{f"{batch_idx+1}/{len(train_loader)}":^10}|{round(train_loss, 5):^10}|{round(train_ppl, 5):^20}|")
+            print(f"|{"TRAIN":^10}|{total_steps:^10}|{total_epochs:^10}|{f"{batch_idx+1}/{len(train_loader)}":^10}|{round(train_loss, 5):^10}|{round(train_ppl, 5):^20}|")
             validation_loss = evaluate(model=model,
                                        dataloader=validation_loader,
                                        loss_fn=loss_fn,
