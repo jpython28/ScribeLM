@@ -49,7 +49,7 @@ else:
     wandb_project = None
 
 run_name = config["train"]["run_name"]
-epochs = config["train"]["epochs"]
+num_steps = config["train"]["num_steps"]
 batch_size = config["train"]["batch_size"]
 lr = config["train"]["lr"]
 seed = config["train"]["seed"]
@@ -131,14 +131,16 @@ run = wandb.init(
     mode = "online" if use_wandb else "disabled",
 )
 
-print(f"|{"Mode":^10}|{"Epoch":^10}|{"Batch":^10}|{"Loss":^10}|{"PPL":^20}|")
+print(f"|{"Mode":^10}|{"Step":^10}|{"Epoch":^10}|{"Batch":^10}|{"Loss":^10}|{"PPL":^20}|")
 
 total_steps = 0
+total_epochs = 0
 best_val_loss = float("inf")
 steps_accumulated = 0
 
 model.train()
-for epoch in range(epochs):
+while total_steps < num_steps:
+    total_epochs += 1
     total_loss = 0.0
     for batch_idx, data in enumerate(train_loader):
         x, y = data
@@ -169,7 +171,7 @@ for epoch in range(epochs):
             train_loss = total_loss/steps_accumulated
             steps_accumulated = 0
             train_ppl = math.exp(train_loss)
-            print(f"|{"TRAIN":^10}|{epoch+1:^10}|{f"{batch_idx+1}/{len(train_loader)}":^10}|{round(train_loss, 5):^10}|{round(train_ppl, 5):^20}|")
+            print(f"|{"TRAIN":^10}|{total_steps:^10}|{total_epochs+1:^10}|{f"{batch_idx+1}/{len(train_loader)}":^10}|{round(train_loss, 5):^10}|{round(train_ppl, 5):^20}|")
             validation_loss = evaluate(model=model,
                                        dataloader=validation_loader,
                                        loss_fn=loss_fn,
@@ -181,7 +183,7 @@ for epoch in range(epochs):
                 best_val_loss = validation_loss
                 torch.save(model.state_dict(), f"{run_name}_best_model.pt")
             validation_ppl = math.exp(validation_loss)
-            print(f"|{"VALID":^10}|{epoch+1:^10}|{"":^10}|{round(validation_loss, 5):^10}|{round(validation_ppl, 5):^20}|")
+            print(f"|{"VALID":^10}|{"":^10}|{"":^10}|{"":^10}|{round(validation_loss, 5):^10}|{round(validation_ppl, 5):^20}|")
             run.log(
                 {
                     "train/loss": train_loss,
@@ -192,6 +194,8 @@ for epoch in range(epochs):
                 step = total_steps
             )
             total_loss = 0.0
+        if total_steps >= num_steps:
+            break
 
 model.load_state_dict(torch.load(f"{run_name}_best_model.pt", map_location=device))
 
@@ -207,7 +211,7 @@ test_ppl = math.exp(test_loss)
 run.summary["test/loss"] = test_loss
 run.summary["test/perplexity"] = test_ppl
 
-print(f"|{"TEST":^10}|{"":^10}|{"":^10}|{round(test_loss, 5):^10}|{round(test_ppl, 5):^20}|")
+print(f"|{"TEST":^10}|{"":^10}|{"":^10}|{"":^10}|{round(test_loss, 5):^10}|{round(test_ppl, 5):^20}|")
 
 artifact = wandb.Artifact(
     name=f"{run_name}-model",
