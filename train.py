@@ -134,6 +134,7 @@ run = wandb.init(
 print(f"|{"Mode":^10}|{"Step":^20}|{"Epoch":^10}|{"Batch":^10}|{"Loss":^10}|{"PPL":^20}|")
 
 total_steps = 0
+total_loss = 0
 total_epochs = 0
 best_val_loss = float("inf")
 steps_accumulated = 0
