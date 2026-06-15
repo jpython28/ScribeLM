@@ -141,7 +141,6 @@ steps_accumulated = 0
 model.train()
 while total_steps < num_steps:
     total_epochs += 1
-    total_loss = 0.0
     for batch_idx, data in enumerate(train_loader):
         x, y = data
         x, y = x.to(device), y.to(device)
