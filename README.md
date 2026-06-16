@@ -4,10 +4,10 @@ ScribeLM is a decoder-only transformer model, implemented from scratch in PyTorc
 
 ## Model Architecture
 
-Many architectural decisions were based on "Attention Is All you Need".
+Many architectural decisions were based on "Attention Is All You Need".
  - ~65M parameters
  - Decoder-only transformer
- - Does not use `nn.MultiheadAttention` or `nn.Transformer`
+ - Does not use `nn.MultiheadAttention` or `nn.Transformer`, for the purpose of getting a better understanding of the transformer architecture
  - Post-normalization: layer norm is applied after residual sums, as opposed to pre-norm, where layer norm is applied before attention and feed-forward networks
  - Sinusoidal positional encodings
  - Causal masking: prevents later tokens from attending to earlier ones
@@ -21,14 +21,14 @@ Many architectural decisions were based on "Attention Is All you Need".
  - `train.py` - training, evaluation, and logging (to wandb)
  - `configs/` - config files for each run of the ablation
  - `colab.ipynb` - jupyter notebook to run training on Colab
- - `REPORT.md` - full report of experimental proccess and findings
+ - `REPORT.md` - full report of experimental process and findings
 
 ## Setup
 
 ```
 pip install -r requirements.txt
 ```
-Training is intended for and tested on Google Colab with an A100 GPU. Colab offers an option to load a notebook from Github. Load `colab.ipynb` and run a config:
+Training is intended for and tested on Google Colab with an A100 GPU. Colab offers an option to load a notebook from Github. Load `colab.ipynb` and run the notebook, or run a config in the terminal with:
 ```
 python train.py --config configs/context_512.yaml
 ```
@@ -44,7 +44,7 @@ Four configurations were trained with varying context length. Architecture, opti
 | 256 | 278.0 |
 | 512 | 256.9 |
 
-Perplexity decreased most when context length was doubled from 64 to 128, causing a ~77 poiny reduction. Further increasing context length led to diminishing returns. Doubling from 128 to 256 only caused a ~21 point reduction. This data would suggest that the model gets the most useful context from closer tokens, but longer-range context contributes smaller, but not insignificant, gains.
+Perplexity decreased most when context length was doubled from 64 to 128, causing a ~77 point reduction. Further increasing context length led to diminishing returns. Doubling from 256 to 512 only caused a ~21 point reduction. This data would suggest that the model gets the most useful context from closer tokens, but longer-range context contributes smaller, but not insignificant, gains.
 
 Full loss and perplexity curves, along with run configs can be found at [https://wandb.ai/jschaller2028-personal/ScribeLM](https://wandb.ai/jschaller2028-personal/ScribeLM).
 
@@ -52,6 +52,6 @@ Full loss and perplexity curves, along with run configs can be found at [https:/
 
  - No learning rate schedule was used
  - Due to non-overlapping chunks, the 256 and 512 context configurations saw the entire dataset more than once, which could have caused overfitting, but the validation curves showed none through all 20,000 steps
- - Future experiments: learning rate schedule, attention head count ablation, learned positional embeddings, untyed embedding weights
+ - Future experiments: learning rate schedule, attention head count ablation, learned positional embeddings, untied embedding weights
 
-`REPORT.md` contains a full report of the experimental proccess, and describes a surprising effect of parameter initialization.
+`REPORT.md` contains a full report of the experimental process, and describes a surprising effect of parameter initialization.
