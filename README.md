@@ -1,6 +1,6 @@
 # ScribeLM
 
-ScribeLM is a decoder-only transformer model, implemented from scratch in PyTorch. It was trained on WikiText-103.
+ScribeLM is a decoder-only transformer model with multi-head attention, implemented from scratch in PyTorch. It was trained on WikiText-103.
 
 ## Model Architecture
 
