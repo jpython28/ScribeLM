@@ -7,7 +7,7 @@ ScribeLM is a decoder-only transformer model, implemented from scratch in PyTorc
 Many architectural decisions were based on "Attention Is All you Need".
  - ~65M parameters
  - Decoder-only transformer
- - Does not use `nn.MultiheadAttention` or `nn.Transformer`
+ - Does not use `nn.MultiheadAttention` or `nn.Transformer`, for the purpose of getting a better understanding of the transformer architecture
  - Post-normalization: layer norm is applied after residual sums, as opposed to pre-norm, where layer norm is applied before attention and feed-forward networks
  - Sinusoidal positional encodings
  - Causal masking: prevents later tokens from attending to earlier ones
