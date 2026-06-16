@@ -44,7 +44,7 @@ Four configurations were trained with varying context length. Architecture, opti
 | 256 | 278.0 |
 | 512 | 256.9 |
 
-Perplexity decreased most when context length was doubled from 64 to 128, causing a ~77 poiny reduction. Further increasing context length led to diminishing returns. Doubling from 128 to 256 only caused a ~21 point reduction. This data would suggest that the model gets the most useful context from closer tokens, but longer-range context contributes smaller, but not insignificant, gains.
+Perplexity decreased most when context length was doubled from 64 to 128, causing a ~77 point reduction. Further increasing context length led to diminishing returns. Doubling from 128 to 256 only caused a ~21 point reduction. This data would suggest that the model gets the most useful context from closer tokens, but longer-range context contributes smaller, but not insignificant, gains.
 
 Full loss and perplexity curves, along with run configs can be found at [https://wandb.ai/jschaller2028-personal/ScribeLM](https://wandb.ai/jschaller2028-personal/ScribeLM).
 
