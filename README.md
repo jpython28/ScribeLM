@@ -37,14 +37,14 @@ python train.py --config configs/context_512.yaml
 
 Four configurations were trained with varying context length. Architecture, optimization, batch_size, learning rate, and random seed were held constant. The configurations were trained for the same number of steps, as opposed to the same number of epochs. This is because non-overlapping chunks means that the number of chunks in an epoch is approximately `total_tokens/context_length`. This means that one epoch with a high context length gives the model less optimizer steps than with a lower context length.
 
-| Context Length | Final Validation Perplexity |
+| Context Length | Test Perplexity |
 |---|---|
-| 64  | 391.8 |
-| 128 | 315.1 |
-| 256 | 278.0 |
-| 512 | 256.9 |
+| 64  | 390.9 |
+| 128 | 314.1 |
+| 256 | 278.6 |
+| 512 | 256.4 |
 
-Perplexity decreased most when context length was doubled from 64 to 128, causing a ~77 point reduction. Further increasing context length led to diminishing returns. Doubling from 256 to 512 only caused a ~21 point reduction. This data would suggest that the model gets the most useful context from closer tokens, but longer-range context contributes smaller, but not insignificant, gains.
+Perplexity decreased most when context length was doubled from 64 to 128, causing a ~77 point reduction. Further increasing context length led to diminishing returns. Doubling from 256 to 512 only caused a ~22 point reduction. This data would suggest that the model gets the most useful context from closer tokens, but longer-range context contributes smaller, but not insignificant, gains.
 
 Full loss and perplexity curves, along with run configs can be found at [https://wandb.ai/jschaller2028-personal/ScribeLM](https://wandb.ai/jschaller2028-personal/ScribeLM).
 
