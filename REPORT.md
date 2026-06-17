@@ -27,7 +27,7 @@ Transformers use self-attention, a mechanism that lets tokens within a certain c
 | 256 | 278.6 |
 | 512 | 256.4 |
 
-!["validation perplexity graph"](validation_perplexity_graph.jpg)
+!["validation perplexity graph"](validation_perplexity_graph.png)
 
 Perplexity decreased most when context length was doubled from 64 to 128, causing a ~77 point reduction. Further increasing context length led to diminishing returns. Doubling from 256 to 512 only caused a ~22 point reduction. This data would suggest that the model gets the most useful context from closer tokens, but longer-range context contributes smaller, but not insignificant, gains.
 
