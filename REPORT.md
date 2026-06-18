@@ -2,7 +2,7 @@
 
 ## Abstract
 
-ScribeLM is a decoder-only transformer with about 65 million parameters, making it a very small model. It is implemented from scratch and trained on WikiText-103. This report studies the effect of context length on perplexity. All other variables, such as architecture, optimization, and training duration were held constant. Perplexity was found to decrease as context length increases, but with diminishing returns at higher context lengths.
+ScribeLM is a decoder-only transformer with about 45 million parameters, making it a very small model. It is implemented from scratch and trained on WikiText-103. This report studies the effect of context length on perplexity. All other variables, such as architecture, optimization, and training duration were held constant. Perplexity was found to decrease as context length increases, but with diminishing returns at higher context lengths.
 
 ## Background
 

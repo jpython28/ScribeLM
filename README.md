@@ -5,7 +5,7 @@ ScribeLM is a decoder-only transformer model with multi-head attention, implemen
 ## Model Architecture
 
 Many architectural decisions were based on "Attention Is All You Need".
- - ~65M parameters
+ - ~45M parameters
  - Decoder-only transformer
  - Does not use `nn.MultiheadAttention` or `nn.Transformer`, for the purpose of getting a better understanding of the transformer architecture
  - Post-normalization: layer norm is applied after residual sums, as opposed to pre-norm, where layer norm is applied before attention and feed-forward networks
@@ -32,6 +32,7 @@ Training is intended for and tested on Google Colab with an A100 GPU. Colab offe
 ```
 python train.py --config configs/context_512.yaml
 ```
+**NOTE: Requires python 3.12+**
 
 ## Results: Context Length Ablation
 
