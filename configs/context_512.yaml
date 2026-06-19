@@ -12,3 +12,4 @@ train:
   lr: 0.0001
   seed: 1738
   validate_freq: 100
+  warmup_pct: 0.05

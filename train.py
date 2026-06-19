@@ -54,6 +54,7 @@ batch_size = config["train"]["batch_size"]
 lr = config["train"]["lr"]
 seed = config["train"]["seed"]
 validate_freq = config["train"]["validate_freq"]
+warmup_pct = config["train"]["warmup_pct"]
 context_length = config["model"]["context_length"]
 vocab_size = config["model"]["vocab_size"]
 num_layers = config["model"]["num_layers"]
@@ -113,6 +114,11 @@ model.to(device)
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
+scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer=optimizer, 
+                                                max_lr=lr, 
+                                                total_steps=num_steps,
+                                                pct_start=warmup_pct)
+
 scaler = torch.amp.GradScaler(device=device)
 
 use_bf16 = torch.cuda.is_available() and torch.cuda.is_bf16_supported()
@@ -164,6 +170,7 @@ while total_steps < num_steps:
                                            max_norm=1.0,
                                            )
             optimizer.step()
+        scheduler.step()
         total_loss += loss.item()
         total_steps += 1
         steps_accumulated += 1
@@ -190,6 +197,7 @@ while total_steps < num_steps:
                     "train/perplexity": min(train_ppl, 100_000), # Avoids high values affecting graph y-scale
                     "validation/loss": validation_loss,
                     "validation/perplexity": min(validation_ppl, 100_000),
+                    "lr": scheduler.get_last_lr()[0],
                 },
                 step = total_steps
             )
