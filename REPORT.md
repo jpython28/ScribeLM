@@ -14,22 +14,24 @@ Transformers use self-attention, a mechanism that lets tokens within a certain c
 
 **Gradient Clipping**: In single-epoch testing, the training and validation showed large and seemingly random loss spikes. These were assumed to be outlier batches causing gradients to grow too large, and gradient clipping was implemented to prevent this.
 
+**Learning Rate Schedule**: Also during testing, the model was significantly underperforming for its size. In the case of the 512 context length version, it achieved a test perplexity of ~256. This was hypothesized to be caused by the constant learning rate. Once a learning rate schedule was implemented, test perplexity dropped significantly, reaching values as low as ~78.
+
 **Dataset**: WikiText-103, flattened and tokenized with GPT-2's BPE tokenizer, and then divided into non-overlapping chunks. A training, validation, and testing split were used. Training for gradient updates, validation for diagnostics throughout training, and testing for a final performance number, evaluated after training is complete.
 
-**Ablation Design**: The ablation involved training four configurations, with different context lengths (64, 128, 256, and 512), but the same batch size, optimizer (AdamW), learning rate, and random seed. The configurations were trained for the same number of steps (20,000), as opposed to the same number of epochs. This is because non-overlapping chunks means that the number of chunks in an epoch is approximately `total_tokens/context_length`. This means that one epoch with a high context length gives the model less optimizer steps than a model with a lower context length.
+**Ablation Design**: The ablation involved training four configurations, with different context lengths (64, 128, 256, and 512), but the same batch size, optimizer (AdamW), learning rate schedule, and random seed. The configurations were trained for the same number of steps (20,000), as opposed to the same number of epochs. This is because non-overlapping chunks means that the number of chunks in an epoch is approximately `total_tokens/context_length`. This means that one epoch with a high context length gives the model less optimizer steps than a model with a lower context length.
 
 ## Results
 
 | Context Length | Test Perplexity |
 |---|---|
-| 64  | 390.9 |
-| 128 | 314.1 |
-| 256 | 278.6 |
-| 512 | 256.4 |
+| 64  | 207.1 |
+| 128 | 130.4 |
+| 256 | 96.0 |
+| 512 | 77.8 |
 
 !["validation perplexity graph"](validation_perplexity_graph.png)
 
-Perplexity decreased most when context length was doubled from 64 to 128, causing a ~77 point reduction. Further increasing context length led to diminishing returns. Doubling from 256 to 512 only caused a ~22 point reduction. This data would suggest that the model gets the most useful context from closer tokens, but longer-range context contributes smaller, but not insignificant, gains.
+Perplexity decreased most when context length was doubled from 64 to 128, causing a ~77 point reduction. Further increasing context length led to diminishing returns. Doubling from 256 to 512 only caused a ~18 point reduction. This data would suggest that the model gets the most useful context from closer tokens, but longer-range context contributes smaller, but not insignificant, gains.
 
 All four of the runs were still improving at the 20,000 step cutoff, which confirms that none of the models had finished learning (plateaued), making the ablation a fair comparison.
 
