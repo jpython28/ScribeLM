@@ -42,7 +42,6 @@ All four of the runs were still improving at the 20,000 step cutoff, which confi
  - Due to non-overlapping chunks, the 256 and 512 token context length configurations completed multiple epochs in 20,000 steps, while the 64 and 128 runs did not. However, the validation curves show no sign of overfitting.
 
 ## Future Work
- - Implement learning rate warmup and decay
  - Conduct another ablation on the number of attention heads or the number of layers
  - Implement learned positional embeddings
  - Compare the performance of tied and untied embeddings
